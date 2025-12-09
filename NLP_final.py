@@ -3,9 +3,7 @@ from bs4 import BeautifulSoup
 from fake_useragent import UserAgent
 
 
-# -------------------------
 # 1) User-Agent 생성
-# -------------------------
 ua = UserAgent()
 HEADERS = {
     "User-Agent": ua.random,
@@ -13,20 +11,18 @@ HEADERS = {
 }
 
 
-# -------------------------
+
 # 2) 검색 함수
-# -------------------------
 def search_cover_letters(company: str, job: str, max_results=10):
     """
-    회사명 + 직무명으로 링커리어 자소서를 검색하고,
-    상세 URL 리스트를 반환한다.
+    회사명 + 직무명으로 자소서를 검색하고, 상세 URL 리스트를 반환한다.
     """
     query = f"{company} {job}"
     url = f"https://linkareer.com/cover-letter/search?query={query}"
 
     r = requests.get(url, headers=HEADERS)
     if r.status_code != 200:
-        print("❌ 검색 페이지 요청 실패:", r.status_code)
+        print("검색 페이지 요청 실패:", r.status_code)
         return []
 
     soup = BeautifulSoup(r.text, "html.parser")
@@ -49,9 +45,7 @@ def search_cover_letters(company: str, job: str, max_results=10):
     return results
 
 
-# -------------------------
 # 3) 상세 페이지 크롤링
-# -------------------------
 def get_cover_letter_text(url: str):
     """
     상세 페이지에서 문항 + 답변 텍스트를 모두 가져와
@@ -84,13 +78,10 @@ def get_cover_letter_text(url: str):
     return "\n\n".join(paragraphs)
 
 
-# -------------------------
 # 4) 통합 크롤링 함수
-# -------------------------
 def crawl_linkareer(company: str, job: str, limit=5):
     """
-    회사명, 직무명으로 검색 → N개 자소서를 상세 크롤링해서
-    리스트 형태로 반환한다.
+    회사명, 직무명으로 검색 → N개 자소서를 상세 크롤링해서 리스트 형태로 반환한다.
     """
     results = search_cover_letters(company, job, max_results=limit)
 
@@ -109,9 +100,7 @@ def crawl_linkareer(company: str, job: str, limit=5):
 
 
 
-# -------------------------
 # 테스트 실행
-# -------------------------
 if __name__ == "__main__":
     company = "한국전력공사"
     job = "전산직"
