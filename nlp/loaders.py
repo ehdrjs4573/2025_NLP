@@ -59,3 +59,22 @@ if __name__ == "__main__":
 
     print("job_vec shape:", job_vec.shape)
     print("company_vec shape:", company_vec.shape)
+
+    # ----------------------------------------
+# RAW 직무 데이터 로딩 (career_job_vectors.json)
+# ----------------------------------------
+RAW_JOB_VECTORS_PATH = DATA_DIR / "career_job_vectors.json"
+
+def load_raw_job_vectors() -> dict:
+    """임베딩 되기 전 RAW 직무 데이터 로드"""
+    with open(RAW_JOB_VECTORS_PATH, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    # job_cd → job_info 맵으로 변환
+    job_map = {}
+    for item in data:
+        job_cd = item.get("job_cd")
+        if job_cd is not None:
+            job_map[int(job_cd)] = item
+
+    return job_map
