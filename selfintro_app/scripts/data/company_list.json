@@ -1,0 +1,52 @@
+[
+  {
+    "company_id": "samsung",
+    "company_name": "삼성전자",
+    "search_keyword": "삼성전자"
+  },
+  {
+    "company_id": "sk_hynix",
+    "company_name": "SK하이닉스",
+    "search_keyword": "SK하이닉스"
+  },
+  {
+    "company_id": "hyundai",
+    "company_name": "현대자동차",
+    "search_keyword": "현대자동차"
+  },
+  {
+    "company_id": "kia",
+    "company_name": "기아",
+    "search_keyword": "기아"
+  },
+  {
+    "company_id": "lotte",
+    "company_name": "롯데",
+    "search_keyword": "롯데"
+  },
+  {
+    "company_id": "cj",
+    "company_name": "CJ",
+    "search_keyword": "CJ"
+  },
+  {
+    "company_id": "posco",
+    "company_name": "포스코",
+    "search_keyword": "포스코"
+  },
+  {
+    "company_id": "hanwha",
+    "company_name": "한화",
+    "search_keyword": "한화"
+  },
+  {
+    "company_id": "lg",
+    "company_name": "LG전자",
+    "search_keyword": "LG전자"
+  },
+  {
+    "company_id": "kt",
+    "company_name": "KT",
+    "search_keyword": "KT"
+  }
+]
