@@ -103,6 +103,12 @@ def generate_recommend_phrases(missing_keywords: List[str]) -> List[str]:
 def analyze_keyword_coverage(job_info: Dict, essay_text: str) -> Dict:
     result = compute_keyword_coverage(job_info, essay_text)
 
+    # 그룹별 커버리지 추가
+    result["group_coverage"] = compute_group_coverage(
+        job_info=job_info,
+        essay_text=essay_text
+    )
+
     # 추천 문구
     result["recommended_phrases"] = generate_recommend_phrases(
         result["missing_keywords"]
@@ -110,7 +116,34 @@ def analyze_keyword_coverage(job_info: Dict, essay_text: str) -> Dict:
 
     return result
 
+def compute_group_coverage(job_info: Dict, essay_text: str) -> Dict:
+    essay_nouns = set(extract_nouns(essay_text))
 
+    groups = {}
+
+    for field in ["skills", "knowledge", "main_abilities"]:
+        items = job_info.get(field, [])
+        keywords = []
+
+        for item in items:
+            parts = re.split(r"[·,. ]+", item)
+            keywords.extend([p.strip() for p in parts if p.strip()])
+
+        keywords = list(set(keywords))
+
+        matched = [k for k in keywords if k in essay_nouns]
+        missing = [k for k in keywords if k not in essay_nouns]
+
+        coverage = round((len(matched) / len(keywords) * 100), 2) if keywords else 0.0
+
+        groups[field] = {
+            "total": len(keywords),
+            "matched": len(matched),
+            "coverage_score": coverage,
+            "missing_keywords": missing[:10]  # 너무 많아지는 거 방지
+        }
+
+    return groups
 # ------------------------------
 # 모듈 단독 실행 테스트
 # ------------------------------
