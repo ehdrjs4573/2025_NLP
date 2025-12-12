@@ -1,163 +1,182 @@
 """
 keyword_coverage.py
 
-직무 벡터 내부의 핵심 키워드(knowledge, skills, abilities)를 기반으로
-자기소개서 텍스트에 얼마나 포함되어 있는지 분석하는 모듈.
-
-Output:
-- coverage_score (%)
-- matched_keywords
-- missing_keywords
-- recommended_phrases (부족한 키워드 기반 자동 추천 문구)
+SBERT 기반 의미 매칭으로
+직무 핵심 키워드(Skills / Knowledge / Abilities)가
+자기소개서 문장에 얼마나 반영되었는지 분석하는 모듈.
 """
 
 from __future__ import annotations
-from typing import List, Dict, Tuple
+from typing import Dict, List
 import re
+import numpy as np
 
-from konlpy.tag import Okt
-okt = Okt()
-
-
-# ------------------------------
-# 텍스트 → 형태소 기반 단어 목록 생성
-# ------------------------------
-def extract_nouns(text: str) -> List[str]:
-    tokens = okt.nouns(text)
-    return [t for t in tokens if len(t) > 1]  # 한 글자 제거(의미 적음)
+from nlp.embedding import embed_sentences
+from nlp.preprocessing import preprocess
+from nlp.loaders import load_raw_job_vectors
+from nlp.similarity import cosine_similarity
 
 
-# ------------------------------
-# 직무 키워드 묶기
-# ------------------------------
-def collect_job_keywords(job_info: Dict) -> List[str]:
+# ==============================
+# 설정
+# ==============================
+SIM_THRESHOLD = 0.35  # 🔥 널널한 의미 매칭 기준
+
+
+# ==============================
+# 직무 키워드 수집
+# ==============================
+def collect_job_keywords_by_group(job_info: Dict) -> Dict[str, List[str]]:
     """
-    career_job_vectors.json 또는 career_job_vectors_embed.json의
-    job_info(dict)에서 skills/knowledge/abilities/interest에서 키워드 추출
+    직무 정보를 Skills / Knowledge / Abilities 그룹으로 분리
     """
-    keywords = []
-
-    for field in ["skills", "knowledge", "main_abilities", "interests"]:
-        if field in job_info and isinstance(job_info[field], list):
-            for item in job_info[field]:
-                # '고장의 발견·수리'처럼 복합어면 나눔
-                parts = re.split(r"[·,. ]+", item)
-                keywords.extend([p.strip() for p in parts if p.strip()])
-
-    # 중복 제거
-    keywords = list(set(keywords))
-    return keywords
-
-
-# ------------------------------
-# 매칭 / 커버리지 계산
-# ------------------------------
-def compute_keyword_coverage(job_info: Dict, essay_text: str) -> Dict:
-    """
-    직무 키워드 vs 자기소개서 의미 포함도 분석
-    """
-    job_keywords = collect_job_keywords(job_info)
-    essay_nouns = extract_nouns(essay_text)
-
-    matched = []
-    missing = []
-
-    for kw in job_keywords:
-        if kw in essay_nouns:
-            matched.append(kw)
-        else:
-            missing.append(kw)
-
-    # coverage score (퍼센트)
-    coverage = 0
-    if len(job_keywords) > 0:
-        coverage = round(len(matched) / len(job_keywords) * 100, 2)
-
-    return {
-        "coverage_score": coverage,
-        "matched_keywords": matched,
-        "missing_keywords": missing
+    groups = {
+        "skills": [],
+        "knowledge": [],
+        "main_abilities": []
     }
 
+    field_map = {
+        "skills": "skills",
+        "knowledge": "knowledge",
+        "main_abilities": "main_abilities"
+    }
 
-# ------------------------------
-# 부족 키워드 기반 추천 문구 생성 (템플릿 방식)
-# ------------------------------
+    for group, field in field_map.items():
+        items = job_info.get(field, [])
+        for item in items:
+            # '고장의 발견·수리' 같은 복합어 분리
+            parts = re.split(r"[·,()/ ]+", item)
+            groups[group].extend([p.strip() for p in parts if len(p.strip()) > 1])
+
+    # 중복 제거
+    for k in groups:
+        groups[k] = list(set(groups[k]))
+
+    return groups
+
+
+# ==============================
+# 의미 기반 키워드 매칭
+# ==============================
+def semantic_keyword_match(
+    keywords: List[str],
+    sentences: List[str],
+    sentence_embeddings: np.ndarray
+) -> Dict:
+
+    if not keywords or not sentences:
+        return {
+            "matched": {},
+            "missing": keywords,
+            "coverage_score": 0.0
+        }
+
+    keyword_embeddings = embed_sentences(keywords)
+
+    matched = {}
+    missing = []
+
+    for idx, kw_vec in enumerate(keyword_embeddings):
+        max_sim = 0.0
+        max_idx = -1
+
+        # 🔥 여기서 for로 문장 하나씩 비교
+        for sent_idx, sent_vec in enumerate(sentence_embeddings):
+            sim = cosine_similarity(kw_vec, sent_vec)
+            if sim > max_sim:
+                max_sim = sim
+                max_idx = sent_idx
+
+        if max_sim >= SIM_THRESHOLD:
+            matched[keywords[idx]] = {
+                "sentence": sentences[max_idx],
+                "similarity": round(float(max_sim), 3)
+            }
+        else:
+            missing.append(keywords[idx])
+
+    coverage = round(len(matched) / len(keywords) * 100, 2) if keywords else 0.0
+
+    return {
+        "matched": matched,
+        "missing": missing,
+        "coverage_score": coverage
+    }
+# ==============================
+# 추천 문장 생성
+# ==============================
 def generate_recommend_phrases(missing_keywords: List[str]) -> List[str]:
-    template = [
-        "{}와 관련된 문제를 진단하고 해결한 경험을 구체적으로 작성해보세요.",
-        "{}을(를) 점검하거나 품질을 관리한 사례가 있다면 추가하는 것이 좋습니다.",
-        "{} 능력을 바탕으로 실행했던 행동 중심 경험을 작성해보세요."
+    templates = [
+        "{}과(와) 관련된 구체적인 경험을 행동 중심으로 서술해보세요.",
+        "{}을(를) 활용해 문제를 해결하거나 판단했던 사례를 추가해보세요.",
+        "{} 역량이 드러나는 결과나 성과를 함께 제시하면 좋습니다."
     ]
 
     recs = []
-    for kw in missing_keywords[:5]:  # 최대 5개만 추천
-        for t in template:
+    for kw in missing_keywords[:5]:
+        for t in templates:
             recs.append(t.format(kw))
+
     return recs
 
 
-# ------------------------------
-# 통합 함수
-# ------------------------------
-def analyze_keyword_coverage(job_info: Dict, essay_text: str) -> Dict:
-    result = compute_keyword_coverage(job_info, essay_text)
+# ==============================
+# 메인 분석 함수
+# ==============================
+def analyze_keyword_coverage(job_id: int, essay_text: str) -> Dict:
+    """
+    report_builder에서 호출되는 메인 함수
+    """
+    # 직무 정보 로드
+    raw_jobs = load_raw_job_vectors()
+    job_info = raw_jobs.get(job_id)
 
-    # 그룹별 커버리지 추가
-    result["group_coverage"] = compute_group_coverage(
-        job_info=job_info,
-        essay_text=essay_text
-    )
+    if job_info is None:
+        return {}
 
-    # 추천 문구
-    result["recommended_phrases"] = generate_recommend_phrases(
-        result["missing_keywords"]
-    )
+    # 전처리
+    prep = preprocess(essay_text)
+    sentences = prep["sentences"]
 
-    return result
+    if not sentences:
+        return {}
 
-def compute_group_coverage(job_info: Dict, essay_text: str) -> Dict:
-    essay_nouns = set(extract_nouns(essay_text))
+    sentence_embeddings = embed_sentences(sentences)
 
-    groups = {}
+    # 키워드 그룹 수집
+    groups = collect_job_keywords_by_group(job_info)
 
-    for field in ["skills", "knowledge", "main_abilities"]:
-        items = job_info.get(field, [])
-        keywords = []
+    group_results = {}
+    all_matched = {}
+    all_missing = []
 
-        for item in items:
-            parts = re.split(r"[·,. ]+", item)
-            keywords.extend([p.strip() for p in parts if p.strip()])
+    for group_name, keywords in groups.items():
+        result = semantic_keyword_match(
+            keywords,
+            sentences,
+            sentence_embeddings
+        )
 
-        keywords = list(set(keywords))
-
-        matched = [k for k in keywords if k in essay_nouns]
-        missing = [k for k in keywords if k not in essay_nouns]
-
-        coverage = round((len(matched) / len(keywords) * 100), 2) if keywords else 0.0
-
-        groups[field] = {
-            "total": len(keywords),
-            "matched": len(matched),
-            "coverage_score": coverage,
-            "missing_keywords": missing[:10]  # 너무 많아지는 거 방지
+        group_results[group_name] = {
+            "coverage_score": result["coverage_score"],
+            "matched_keywords": result["matched"],
+            "missing_keywords": result["missing"]
         }
 
-    return groups
-# ------------------------------
-# 모듈 단독 실행 테스트
-# ------------------------------
-if __name__ == "__main__":
-    sample_job = {
-        "skills": ["고장의 발견·수리", "문제 해결", "품질관리분석"],
-        "knowledge": ["안전과 보안", "기계", "통신"],
-        "main_abilities": ["신체·운동능력"],
-        "interests": ["서비스 정신", "책임감"]
+        all_matched.update(result["matched"])
+        all_missing.extend(result["missing"])
+
+    overall_coverage = round(
+        sum(g["coverage_score"] for g in group_results.values()) / len(group_results),
+        2
+    )
+
+    return {
+        "coverage_score": overall_coverage,
+        "group_coverage": group_results,
+        "matched_keywords": list(all_matched.keys()),
+        "missing_keywords": list(set(all_missing)),
+        "matched_evidence": all_matched,
+        "recommended_phrases": generate_recommend_phrases(all_missing)
     }
-
-    essay = """
-    저는 현장에서 기계 점검과 안전 기준을 준수하는 경험을 해왔습니다.
-    문제를 해결하기 위해 기록을 분석하고 서비스를 제공한 경험이 있습니다.
-    """
-
-    print(analyze_keyword_coverage(sample_job, essay))
