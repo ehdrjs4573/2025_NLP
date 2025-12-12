@@ -23,7 +23,6 @@ from sentence_transformers import SentenceTransformer
 
 _MODEL: Optional[SentenceTransformer] = None
 
-# 한국어용 SBERT 모델 (원하면 나중에 바꿔도 됨)
 DEFAULT_MODEL_NAME = "jhgan/ko-sroberta-multitask"
 
 

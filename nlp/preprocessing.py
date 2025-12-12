@@ -15,9 +15,6 @@ import re
 import numpy as np
 from typing import List, Dict, Optional
 
-# =============================================================================
-# 1) BASIC CLEANING
-# =============================================================================
 
 def clean_basic(text: str) -> str:
     """
@@ -39,10 +36,6 @@ def clean_basic(text: str) -> str:
     return text.strip()
 
 
-# =============================================================================
-# 2) ENFORCE SENTENCE ENDING
-# =============================================================================
-
 def enforce_sentence_end(text: str) -> str:
     """
     줄바꿈으로 문장이 끝나는 경우 뒤에 마침표 자동 부여.
@@ -51,10 +44,6 @@ def enforce_sentence_end(text: str) -> str:
     text = re.sub(r"([가-힣0-9])\n", r"\1.\n", text)
     return text
 
-
-# =============================================================================
-# 3) REMOVE NOISE
-# =============================================================================
 
 def remove_noise(text: str) -> str:
     """
@@ -66,13 +55,9 @@ def remove_noise(text: str) -> str:
     return text
 
 
-# =============================================================================
-# 4-1) RULE-BASED NORMALIZATION
-# =============================================================================
-
 def normalize_text_rule_based(text: str) -> str:
     """
-    가장 기본적인 표현 통일만 수행 (완전 하드코딩).
+    가장 기본적인 표현 통일만 수행 
     """
     rules = [
         (r"하였습니다", "했습니다"),
@@ -86,9 +71,6 @@ def normalize_text_rule_based(text: str) -> str:
     return text
 
 
-# =============================================================================
-# 4-2) MORPHOLOGICAL NORMALIZATION (Mecab)
-# =============================================================================
 
 try:
     from konlpy.tag import Mecab
@@ -118,11 +100,6 @@ def normalize_text_morphological(text: str) -> str:
 
     return text
 
-
-# =============================================================================
-# 5) SPELL CHECK (OPTIONAL)
-# =============================================================================
-
 try:
     from hanspell import spell_checker
 
@@ -137,10 +114,6 @@ except ImportError:
         return text
 
 
-# =============================================================================
-# 6) SENTENCE SPLIT
-# =============================================================================
-
 def split_sentences(text: str) -> List[str]:
     """
     '.!? + 공백/줄바꿈' 을 기준으로 문장 단위로 나눔.
@@ -149,9 +122,7 @@ def split_sentences(text: str) -> List[str]:
     return [s.strip() for s in parts if s.strip()]
 
 
-# =============================================================================
-# 7) SEMANTIC NORMALIZATION (SBERT)
-# =============================================================================
+# 시멘틱 정규화
 
 try:
     from nlp.embedding import embed_sentences
@@ -226,10 +197,7 @@ def semantic_label_sentences(sentences: List[str], threshold: float = 0.70):
     return results
 
 
-# =============================================================================
-# 8) MAIN PIPELINE
-# =============================================================================
-
+# 메인 파이프라인
 def preprocess(
     text: str,
     use_spellcheck: bool = False,
@@ -263,9 +231,7 @@ def preprocess(
     }
 
 
-# =============================================================================
-# 9) TEST
-# =============================================================================
+# 테스트
 
 if __name__ == "__main__":
     sample = """

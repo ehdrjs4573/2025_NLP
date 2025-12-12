@@ -11,9 +11,7 @@ from typing import Dict, List
 import numpy as np
 
 
-# -----------------------------
 # 기본 코사인 유사도
-# -----------------------------
 def cosine_similarity(v1: np.ndarray, v2: np.ndarray) -> float:
     v1 = np.array(v1, dtype=float)
     v2 = np.array(v2, dtype=float)
@@ -25,9 +23,8 @@ def cosine_similarity(v1: np.ndarray, v2: np.ndarray) -> float:
     return float(np.dot(v1, v2) / denom)
 
 
-# -----------------------------
 # Anchor 기반 calibration
-# -----------------------------
+
 def calibrate_similarity(
     sim: float,
     low: float,
@@ -50,9 +47,7 @@ def calibrate_similarity(
     return round(float(np.clip(score, 0, 100)), 2)
 
 
-# -----------------------------
 # 메인 함수
-# -----------------------------
 def compute_fit_scores(
     job_vector: np.ndarray,
     company_vector: np.ndarray,
@@ -67,7 +62,7 @@ def compute_fit_scores(
     company_sim = cosine_similarity(company_vector, essay_vector)
     job_company_sim = cosine_similarity(job_vector, company_vector)
 
-    # 🔥 공통 anchor (지금 데이터 분포 기준)
+    # 공통 anchor (지금 데이터 분포 기준)
     ANCHOR = {
         "low": -0.08,
         "mid": 0.02,
@@ -86,9 +81,7 @@ def compute_fit_scores(
     }
 
 
-# -----------------------------
 # 문장 단위 유사도 (그대로 유지)
-# -----------------------------
 def compute_sentence_level_similarity(
     job_vector: np.ndarray,
     company_vector: np.ndarray,
@@ -108,9 +101,7 @@ def compute_sentence_level_similarity(
     }
 
 
-# -----------------------------
 # 테스트
-# -----------------------------
 if __name__ == "__main__":
     v_job = np.random.rand(768)
     v_company = np.random.rand(768)

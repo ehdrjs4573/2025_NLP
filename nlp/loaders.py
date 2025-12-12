@@ -60,9 +60,7 @@ if __name__ == "__main__":
     print("job_vec shape:", job_vec.shape)
     print("company_vec shape:", company_vec.shape)
 
-    # ----------------------------------------
 # RAW 직무 데이터 로딩 (career_job_vectors.json)
-# ----------------------------------------
 RAW_JOB_VECTORS_PATH = DATA_DIR / "career_job_vectors.json"
 
 def load_raw_job_vectors() -> dict:

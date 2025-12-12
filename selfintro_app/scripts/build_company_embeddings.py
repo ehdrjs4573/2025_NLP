@@ -15,11 +15,11 @@ model = SentenceTransformer("jhgan/ko-sbert-multitask")
 
 
 def build_company_embeddings():
-    print(f"📌 {INPUT_PATH.name} 로드 중...")
+    print(f"{INPUT_PATH.name} 로드 중...")
     with open(INPUT_PATH, "r", encoding="utf-8") as f:
         companies = json.load(f)
 
-    print(f"📌 총 {len(companies)}개 기업 임베딩 생성 시작")
+    print(f"총 {len(companies)}개 기업 임베딩 생성 시작")
 
     results = []
 

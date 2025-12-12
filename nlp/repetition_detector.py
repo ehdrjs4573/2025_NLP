@@ -14,9 +14,7 @@ from konlpy.tag import Okt
 okt = Okt()
 
 
-# ---------------------------------------
-# 1) 단어 반복 탐지
-# ---------------------------------------
+#  단어 반복 탐지
 def detect_repeated_words(text: str, threshold: int = 3) -> Dict[str, int]:
     tokens = [t for t in okt.nouns(text) if len(t) > 1]
     counter = Counter(tokens)
@@ -26,9 +24,9 @@ def detect_repeated_words(text: str, threshold: int = 3) -> Dict[str, int]:
     return repeated
 
 
-# ---------------------------------------
-# 2) 구절(n-gram) 반복 탐지 (2~4gram)
-# ---------------------------------------
+
+#  구절(n-gram) 반복 탐지 (2~4gram)
+
 def extract_ngrams(tokens: List[str], n: int):
     return [" ".join(tokens[i:i+n]) for i in range(len(tokens)-n+1)]
 
@@ -51,10 +49,7 @@ def detect_repeated_phrases(text: str, threshold: int = 2) -> Dict[str, int]:
     return repeated
 
 
-# ---------------------------------------
-# 3) 문장 구조 반복 탐지
-#    예: "저는 ~했습니다" 패턴
-# ---------------------------------------
+# 문장 구조 반복 탐지 (예: "저는 ~했습니다" 패턴)
 def detect_sentence_patterns(text: str) -> Dict[str, int]:
     sentences = re.split(r"[.!?]\s*|\n", text)
     pattern_counter = Counter()
@@ -66,7 +61,6 @@ def detect_sentence_patterns(text: str) -> Dict[str, int]:
 
         # 주요 문장 구조만 단순화 (더 발전 가능)
         pattern = re.sub(r"[가-힣0-9]+", "X", s)  
-        # ex: "저는 프로젝트를 수행했습니다" → "X X X X"
 
         pattern_counter[pattern] += 1
 
@@ -74,9 +68,7 @@ def detect_sentence_patterns(text: str) -> Dict[str, int]:
     return repeated
 
 
-# ---------------------------------------
-# 4) 통합 + 제안문 생성
-# ---------------------------------------
+# 통합
 def analyze_repetition(text: str) -> Dict:
     words = detect_repeated_words(text)
     phrases = detect_repeated_phrases(text)
@@ -101,9 +93,7 @@ def analyze_repetition(text: str) -> Dict:
     }
 
 
-# ---------------------------------------
-# 5) 테스트용 (터미널 출력: 이모지/색 없음, 깔끔한 형식)
-# ---------------------------------------
+# 테스트용 
 if __name__ == "__main__":
     sample = """
     저는 프로젝트를 수행하며 다양한 경험을 쌓았습니다.

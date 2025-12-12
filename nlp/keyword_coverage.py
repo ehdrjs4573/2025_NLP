@@ -17,15 +17,11 @@ from nlp.loaders import load_raw_job_vectors
 from nlp.similarity import cosine_similarity
 
 
-# ==============================
 # 설정
-# ==============================
-SIM_THRESHOLD = 0.35  # 🔥 널널한 의미 매칭 기준
+SIM_THRESHOLD = 0.35  
 
 
-# ==============================
 # 직무 키워드 수집
-# ==============================
 def collect_job_keywords_by_group(job_info: Dict) -> Dict[str, List[str]]:
     """
     직무 정보를 Skills / Knowledge / Abilities 그룹으로 분리
@@ -56,9 +52,7 @@ def collect_job_keywords_by_group(job_info: Dict) -> Dict[str, List[str]]:
     return groups
 
 
-# ==============================
 # 의미 기반 키워드 매칭
-# ==============================
 def semantic_keyword_match(
     keywords: List[str],
     sentences: List[str],
@@ -81,7 +75,7 @@ def semantic_keyword_match(
         max_sim = 0.0
         max_idx = -1
 
-        # 🔥 여기서 for로 문장 하나씩 비교
+        #  여기서 for로 문장/단어 각각 하나씩 비교
         for sent_idx, sent_vec in enumerate(sentence_embeddings):
             sim = cosine_similarity(kw_vec, sent_vec)
             if sim > max_sim:
@@ -103,9 +97,7 @@ def semantic_keyword_match(
         "missing": missing,
         "coverage_score": coverage
     }
-# ==============================
 # 추천 문장 생성
-# ==============================
 def generate_recommend_phrases(missing_keywords: List[str]) -> List[str]:
     templates = [
         "{}과(와) 관련된 구체적인 경험을 행동 중심으로 서술해보세요.",
@@ -121,9 +113,7 @@ def generate_recommend_phrases(missing_keywords: List[str]) -> List[str]:
     return recs
 
 
-# ==============================
 # 메인 분석 함수
-# ==============================
 def analyze_keyword_coverage(job_id: int, essay_text: str) -> Dict:
     """
     report_builder에서 호출되는 메인 함수

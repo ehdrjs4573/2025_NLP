@@ -11,16 +11,12 @@ import numpy as np
 from nlp.embedding import embed_sentences   # 여러 문장 임베딩
 
 
-# -----------------------------
-# 1) 문장 나누기
-# -----------------------------
+# 문장 나누기
 def split_sentences(text: str) -> List[str]:
     sentences = re.split(r"[.!?]\s*|\n", text)
     return [s.strip() for s in sentences if s.strip()]
 
-# -----------------------------
-# 2) STAR 예시 문장 정의
-# -----------------------------
+# STAR 예시 문장 정의
 S_examples = [
     "프로젝트를 진행하던 중 예기치 못한 문제가 발생했습니다.",
     "팀 전체가 해결하기 어려운 상황에 직면했습니다.",
@@ -111,9 +107,7 @@ R_examples = [
     "프로젝트 목표를 달성했습니다.",
     "팀의 기술적 역량이 향상되었습니다."
 ]
-# -----------------------------
-# 3) SBERT로 대표 벡터 생성
-# -----------------------------
+# SBERT로 대표 벡터 생성
 def get_center_vector(sentences: List[str]) -> np.ndarray:
     vectors = embed_sentences(sentences)
     return np.mean(vectors, axis=0)
@@ -124,18 +118,14 @@ A_vec = get_center_vector(A_examples)
 R_vec = get_center_vector(R_examples)
 
 
-# -----------------------------
-# 4) 코사인 유사도
-# -----------------------------
+# 코사인 유사도
 def cosine_similarity(v1, v2):
     v1 = np.array(v1)
     v2 = np.array(v2)
     return float(np.dot(v1, v2) / ((np.linalg.norm(v1) * np.linalg.norm(v2)) + 1e-8))
 
 
-# -----------------------------
-# 5) 문장 하나 태깅
-# -----------------------------
+# 문장 하나 태깅
 def label_sentence(sentence: str) -> str:
     vec = embed_sentences([sentence])[0]
 
@@ -155,17 +145,13 @@ def label_sentence(sentence: str) -> str:
     return best
 
 
-# -----------------------------
-# 6) 전체 문장 태깅
-# -----------------------------
+# 전체 문장 태깅
 def tag_star_semantic(text: str) -> List[Tuple[str, str]]:
     sentences = split_sentences(text)
     return [(s, label_sentence(s)) for s in sentences]
 
 
-# -----------------------------
-# 7) STAR 에피소드로 묶기
-# -----------------------------
+# STAR 에피소드로 묶기
 def group_star_episodes(
     tagged: List[Tuple[str, str]],
     min_sentences: int = 1
@@ -214,9 +200,7 @@ def group_star_episodes(
     return episodes
 
 
-# -----------------------------
-# 8) 에피소드별 STAR 완성도 평가
-# -----------------------------
+# 에피소드별 STAR 완성도 평가
 def evaluate_episode(episode: dict):
     labels = episode["labels"]
     label_set = set(labels)
@@ -272,9 +256,7 @@ def evaluate_episode(episode: dict):
     }
 
 
-# -----------------------------
-# 9) 전체 텍스트 STAR 구조 분석
-# -----------------------------
+# 전체 텍스트 STAR 구조 분석
 def analyze_star_structure(text: str):
     """
     텍스트 한 편에 대해:
@@ -304,9 +286,7 @@ def analyze_star_structure(text: str):
     }
 
 
-# -----------------------------
-# 10) 테스트 실행
-# -----------------------------
+# 1테스트 실행
 if __name__ == "__main__":
     sample = """
     팀 프로젝트에서 API 서버 오류가 반복되는 상황이었습니다.
